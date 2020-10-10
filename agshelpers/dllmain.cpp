@@ -32,7 +32,7 @@ int wchardecimaltoint(const WCHAR* const input) {
     int i = 0, iprev = 0;
     const char* p = (const char*)input;
     int neg = 0;
-    if (*p == '-') neg = 1;
+    if (*p == '-') { neg = 1; p += 2; }
     while (*p >= '0' && *p <= '9') {
         i = i * 10 + *p - '0';
         if (iprev > i) {
