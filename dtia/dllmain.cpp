@@ -30,10 +30,9 @@ DWORD gs_dwThreadIdMDIVS = 0;
 static const TCHAR g_mainmonregkey[] =
     TEXT("Software\\AGS\\Multi desktop item view saver");
 
-HINSTANCE g_hinst = NULL;
+HINSTANCE g_hinst = nullptr;
+HANDLE g_threadheap = nullptr;
 DDRegistryExtension* g_pdesktop;
-
-HANDLE g_threadheap = NULL;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -50,7 +49,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_DETACH:
         break;
     case DLL_PROCESS_DETACH:
-        DDRegistryExtension::closeDDRegExt();
         HeapDestroy(g_threadheap);
         break;
     }
@@ -521,6 +519,7 @@ DesktopDisplays* WINAPI setHookToDesktopWindow() {
             return nullptr;
     }
     else {
+        DDRegistryExtension::closeDDRegExt();
         UnhookWindowsHookEx(gs_hook);
         return nullptr;
     }
@@ -575,6 +574,10 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         case WM_POST_DISPLAY_CHANGE_WORKAROUND:
         {
+            // When display configuration changes and WM_DISPLAYCHANGE message is received
+            // GetWindowRect function writes to RECT struct old values with 50% chance.
+            // So, before update DDRegistryExtension data, we need to check that 
+            // we will get actually acurate settings.
             RECT test;
             GetWindowRect(g_pdesktop->getDesktopHandle(), &test);
             if (test == g_pdesktop->getFullDesktop()) {
@@ -593,6 +596,7 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         PostMessage(hWnd, WM_NULL, WM_POST_DISPLAY_CHANGE_WORKAROUND, 0);
         break;
     case WM_CLOSE:
+        DDRegistryExtension::closeDDRegExt();
         DestroyWindow(hWnd);
         break;
     }

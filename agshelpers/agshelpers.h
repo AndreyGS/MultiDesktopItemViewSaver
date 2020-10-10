@@ -11,6 +11,8 @@ AGSHELPERSAPI inline bool operator==(RECT rt1, RECT rt2);
 
 class DDRegistryExtension;
 
+// This class is a singleton. It's instance obtains by DesktopDisplays::getDD()
+// and when it no more need it's must be closed by DesktopDisplays::closeDD()
 class AGSHELPERSAPI DesktopDisplays {
 public:
     struct MonitorRects {
@@ -23,7 +25,9 @@ public:
     };
 
     DesktopDisplays(const DesktopDisplays&) = delete;
+    DesktopDisplays(DesktopDisplays&&) = delete;
     DesktopDisplays& operator=(const DesktopDisplays&) = delete;
+    DesktopDisplays& operator=(DesktopDisplays&&) = delete;
 
     inline virtual void refreshData();
 

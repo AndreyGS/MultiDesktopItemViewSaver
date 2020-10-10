@@ -14,13 +14,18 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszCmdLine, _In_ int) {
     DesktopDisplays* dd;
+    // First we need to set hook function, from mdivs.dll to explorer
     if ((dd = setHookToDesktopWindow()) == nullptr)
         exit(1);
     
+    // Second, we need to wait, while injected function create a server 
+    // as modeless dialog which sends us a message that it ready for action.
     MSG msg;
-    for (;;) {
-        GetMessage(&msg, NULL, 0, 0);
+    int i;
+    for (i = 0;i < 50; ++i) {
+        PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
         if (msg.message == WM_NULL) break;
+        Sleep(20);
     }
 
     g_hhookwnd = FindWindow(NULL, TEXT("MultiDIVS"));
@@ -28,7 +33,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
         exit(1);
     
     g_dwhmainappthread = GetCurrentThreadId();
-
+    // Then we create main user dialog window
     CreateDialogParamW(hInstExe, MAKEINTRESOURCE(IDD_MDIVSAPP), NULL, Dlg_Proc, msg.lParam);
     HWND hdialog = FindWindow(nullptr, TEXT("Multi Desktop Item View Saver"));
     
@@ -45,7 +50,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
                 }
                 else
                     MessageBox(hdialog, TEXT("Something happens wrong. Saving error."),
-                        TEXT("Error compliting operation"), MB_OK);
+                        TEXT("Error completing operation"), MB_OK);
                 break;
             case WM_DELETED:
                 EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), false);
@@ -71,13 +76,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
                     abs(mrs.workArea.bottom - mrs.workArea.top) / 2 - abs(rt.bottom - rt.top) / 2 + 0.5,
                     abs(rt.right - rt.left), abs(rt.bottom - rt.top), FALSE);
                 
+                // There is no any saved profiles yet
                 if (msg.lParam == 0) {
                     EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), false);
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETEALL), false);
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETE), false);
+                // There is no saved profile for current desktop configuration
                 } else if (msg.lParam == 1) {
                     EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), false);
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETE), false);
+                // There is a profile for this virtual monitor settings
                 } else {
                     EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), true);
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETE), true);
@@ -97,6 +105,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
     }
 
     SendMessage(g_hhookwnd, WM_CLOSE, 0, 0);
+    // Before unhooking we need to make sure that all memory cleanup
+    // on the explorer side is made and server window is closed
+    for (int i = 0; i < 50; ++i) {
+        if (!IsWindow(g_hhookwnd)) break;
+        Sleep(20);
+    }
     setHookToDesktopWindow();
 
     return 0;
@@ -134,7 +148,6 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             return TRUE;
         }
         break;
-    case WM_NULL:
     case WM_CLOSE:
         PostThreadMessage(g_dwhmainappthread, WM_QUIT, 0, 0);
         DestroyWindow(hWnd);

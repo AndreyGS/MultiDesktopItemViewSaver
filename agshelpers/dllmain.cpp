@@ -5,7 +5,7 @@
 #include "agshelpers.h"
 #include <memory>
 
-HANDLE g_threadheap = NULL;
+HANDLE g_threadheap = nullptr;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
