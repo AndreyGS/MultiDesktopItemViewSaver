@@ -31,16 +31,17 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 int wchardecimaltoint(const WCHAR* input) {
     int i = 0, iprev = 0;
     int neg = 0;
-    if (*input == '-') { neg = 1; input += 2; }
+    if (*input == '-') { neg = 1; ++input; }
     while (*input >= '0' && *input <= '9') {
         i = i * 10 + *input - '0';
-        if (iprev > i) {
+        if ((i - (*input - '0')) / 10 != iprev || iprev > i) {
+            if ((i == -i) && neg) return i;
             i = iprev;
             break;
         }
         else
             iprev = i;
-        input += 2;
+        ++input;
     }
     if (neg) i = -i;
     return i;

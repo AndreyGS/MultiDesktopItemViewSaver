@@ -91,6 +91,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETE), true);
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETEALL), true);
                 }
+                RedrawWindow(hdialog, nullptr, nullptr, RDW_VALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
                 ShowWindow(hdialog, SW_SHOW);
                 SetFocus(hdialog);
             }
