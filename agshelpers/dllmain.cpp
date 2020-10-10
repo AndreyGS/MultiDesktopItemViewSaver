@@ -3,6 +3,7 @@
 
 #define AGSHELPERSAPI __declspec(dllexport)
 #include "agshelpers.h"
+#include <memory>
 
 HANDLE g_threadheap = NULL;
 
@@ -14,12 +15,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        g_threadheap = HeapCreate(HEAP_NO_SERIALIZE, 4096, 0);
+        g_threadheap = HeapCreate(0, 4096, 0);
         break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
         break;
     case DLL_PROCESS_DETACH:
+        DesktopDisplays::closeDD();
         HeapDestroy(g_threadheap);
         break;
     }
@@ -50,7 +52,7 @@ DesktopDisplays* DesktopDisplays::instance = nullptr;
 DesktopDisplays* DesktopDisplays::getDD() {
     if (instance == nullptr) {
         instance = static_cast<DesktopDisplays*>(HeapAlloc(g_threadheap, 0, sizeof(DesktopDisplays)));
-        if (instance) *instance = DesktopDisplays();
+        if (instance) instance = new(instance)DesktopDisplays();
     }
     return instance;
 }
@@ -58,7 +60,7 @@ DesktopDisplays* DesktopDisplays::getDD() {
 void DesktopDisplays::closeDD() {
     if (instance) {
         instance->~DesktopDisplays();
-        HeapFree(g_threadheap, HEAP_NO_SERIALIZE, instance);
+        HeapFree(g_threadheap, 0, instance);
         instance = nullptr;
     }
 }
@@ -66,6 +68,9 @@ void DesktopDisplays::closeDD() {
 inline DesktopDisplays::DesktopDisplays() { 
     initialize();
 }
+
+inline DesktopDisplays::DesktopDisplays(int) 
+    : monitors(0), fulldesktop{ 0 }, primmon(0), moncount(0), valid(false) { }
 
 void DesktopDisplays::initialize() {
     valid = true;
@@ -79,7 +84,7 @@ void DesktopDisplays::initialize() {
         getDisplaysMetricsFromCurrentDesktop();
 }
 
-inline DesktopDisplays::~DesktopDisplays() {
+DesktopDisplays::~DesktopDisplays() {
     cleanHeap();
 }
 
@@ -89,7 +94,7 @@ inline void DesktopDisplays::refreshData() {
 }
 
 inline void DesktopDisplays::cleanHeap() {
-    HeapFree(g_threadheap, HEAP_NO_SERIALIZE, monitors);
+    if (monitors) HeapFree(g_threadheap, 0, monitors);
 }
 
 inline HWND DesktopDisplays::getDesktopHandle() const {
@@ -97,7 +102,7 @@ inline HWND DesktopDisplays::getDesktopHandle() const {
 }
 
 void DesktopDisplays::getDisplaysMetricsFromCurrentDesktop() {
-    HMONITOR* hms = static_cast<HMONITOR*>(HeapAlloc(g_threadheap, HEAP_NO_SERIALIZE, sizeof(HMONITOR) * moncount));
+    HMONITOR* hms = static_cast<HMONITOR*>(HeapAlloc(g_threadheap, 0, sizeof(HMONITOR) * moncount));
     if (hms == 0) {
         valid = false; return;
     }
@@ -134,17 +139,17 @@ void DesktopDisplays::getDisplaysMetricsFromCurrentDesktop() {
             if (mi.dwFlags == MONITORINFOF_PRIMARY) primmon = i;
         }
     }
-    HeapFree(g_threadheap, HEAP_NO_SERIALIZE, hms);
+    HeapFree(g_threadheap, 0, hms);
 }
 
 inline void DesktopDisplays::allocateMonitors() {
-    monitors = static_cast<MonitorRects*>(HeapAlloc(g_threadheap, HEAP_NO_SERIALIZE, sizeof(MonitorRects) * moncount));
+    monitors = static_cast<MonitorRects*>(HeapAlloc(g_threadheap, 0, sizeof(MonitorRects) * moncount));
     if (monitors == nullptr) valid = false;
 }
 
 inline unsigned char DesktopDisplays::getPrimaryMonitorIndex() const { return primmon; }
 inline unsigned char DesktopDisplays::getMonitorCount() const { return moncount; }
-inline RECT DesktopDisplays::getFullDesktop() const{ return fulldesktop; }
+inline RECT DesktopDisplays::getFullDesktop() const { return fulldesktop; }
 
 inline bool DesktopDisplays::getMonitorRects(unsigned char index, DesktopDisplays::MonitorRects* mr) const
 {
@@ -215,25 +220,29 @@ void DesktopDisplays::getCornerMonitorRects(Corner corner, MonitorRects* mr) con
     *mr = monitors[index];
 }
 
-
+inline bool DesktopDisplays::isValid() const { return valid; }
 
 bool DesktopDisplays::operator==(const DesktopDisplays& dd) const {
-    if (!(fulldesktop != dd.fulldesktop) && !(moncount != dd.moncount)) {
+    if (fulldesktop == dd.fulldesktop && moncount == dd.moncount) {
+        int equals = 0;
         for (int i = 0; i < moncount; ++i) {
-            if (monitors[i].fullArea != dd.monitors[i].fullArea
-                || monitors[i].workArea != dd.monitors[i].workArea)
-                return false;
+            for (int j = 0; j < moncount; ++j) {
+                if (monitors[i].fullArea == dd.monitors[j].fullArea
+                    && monitors[i].workArea == dd.monitors[j].workArea) {
+                    ++equals;
+                    break;
+                }
+            }
         }
-        return true;
+        if (equals == moncount) return true;
     }
-    else
-        return false;
+    return false;
 }
 
-inline bool operator!=(RECT rt1, RECT rt2) {
+inline bool operator==(RECT rt1, RECT rt2) {
     if (rt1.left == rt2.left && rt1.right == rt2.right
         && rt1.top == rt2.top && rt1.bottom == rt2.bottom)
-        return false;
-    else
         return true;
+    else
+        return false;
 }

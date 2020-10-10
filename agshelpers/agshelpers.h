@@ -7,7 +7,7 @@
 #define STATUS_ZERO_MONITORS_COUNT 0xE0000101
 
 AGSHELPERSAPI int wchardecimaltoint(const WCHAR* const input);
-AGSHELPERSAPI inline bool operator!=(RECT rt1, RECT rt2);
+AGSHELPERSAPI inline bool operator==(RECT rt1, RECT rt2);
 
 class DDRegistryExtension;
 
@@ -22,6 +22,9 @@ public:
         NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST 
     };
 
+    DesktopDisplays(const DesktopDisplays&) = delete;
+    DesktopDisplays& operator=(const DesktopDisplays&) = delete;
+
     inline virtual void refreshData();
 
     inline unsigned char getPrimaryMonitorIndex() const;
@@ -30,8 +33,7 @@ public:
     inline unsigned char getMonitorCount() const;
     inline RECT getFullDesktop() const;
     inline HWND getDesktopHandle() const;
-
-    inline bool isValid() const { return valid; }
+    inline bool isValid() const;
 
     bool operator==(const DesktopDisplays& dd) const;
 
@@ -41,6 +43,11 @@ public:
     friend class ::DDRegistryExtension;
 private:
     inline DesktopDisplays();
+
+    // This construstor is workaround for DDRegistryExtension(int)
+    // constructor, that supply empty DesktopDisplays instance to later
+    inline DesktopDisplays(int);
+
     inline ~DesktopDisplays();
 
     inline void cleanHeap();

@@ -13,5 +13,6 @@ constexpr int WM_SAVED = WM_APP + 5;
 constexpr int WM_DELETED = WM_APP + 6;
 constexpr int WM_CLEARED = WM_APP + 7;
 constexpr int WM_DISPLAY_CHANGE_EVENT_SIGNALED = WM_APP + 8;
+constexpr int WM_POST_DISPLAY_CHANGE_WORKAROUND = WM_APP + 9;
 
-MDVISLIBAPI const DesktopDisplays* WINAPI setHookToDesktopWindow();
+MDVISLIBAPI DesktopDisplays* WINAPI setHookToDesktopWindow();

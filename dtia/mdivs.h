@@ -14,6 +14,8 @@ public:
     };
 
     DDRegistryExtension(int regnum);
+    DDRegistryExtension(const DDRegistryExtension&) = delete;
+    DDRegistryExtension& operator=(const DDRegistryExtension&) = delete;
 
     inline virtual void refreshData();
 

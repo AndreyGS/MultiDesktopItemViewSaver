@@ -13,7 +13,7 @@ DWORD g_dwhmainappthread = NULL;
 INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszCmdLine, _In_ int) {
-    const DesktopDisplays* dd;
+    DesktopDisplays* dd;
     if ((dd = setHookToDesktopWindow()) == nullptr)
         exit(1);
     
@@ -60,6 +60,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
             {
                 RECT rt;
                 DesktopDisplays::MonitorRects mrs;
+                if (msg.lParam > 2) {
+                    dd->refreshData(); msg.lParam -= 5;
+                }
                 int i = dd->getPrimaryMonitorIndex();
                 GetWindowRect(hdialog, &rt);
                 dd->getMonitorRects(i, &mrs);
@@ -67,12 +70,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
                     abs(mrs.workArea.right - mrs.workArea.left) / 2 - abs(rt.right - rt.left) / 2 + 0.5,
                     abs(mrs.workArea.bottom - mrs.workArea.top) / 2 - abs(rt.bottom - rt.top) / 2 + 0.5,
                     abs(rt.right - rt.left), abs(rt.bottom - rt.top), FALSE);
-                if (msg.lParam < 2) {
+                
+                if (msg.lParam == 0) {
+                    EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), false);
+                    EnableWindow(GetDlgItem(hdialog, BTN_DELETEALL), false);
+                    EnableWindow(GetDlgItem(hdialog, BTN_DELETE), false);
+                } else if (msg.lParam == 1) {
                     EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), false);
                     EnableWindow(GetDlgItem(hdialog, BTN_DELETE), false);
-                }
-                if (!msg.lParam) {
-                    EnableWindow(GetDlgItem(hdialog, BTN_DELETEALL), false);
+                } else {
+                    EnableWindow(GetDlgItem(hdialog, BTN_RESTORE_PROFILE), true);
+                    EnableWindow(GetDlgItem(hdialog, BTN_DELETE), true);
+                    EnableWindow(GetDlgItem(hdialog, BTN_DELETEALL), true);
                 }
                 ShowWindow(hdialog, SW_SHOW);
                 SetFocus(hdialog);
@@ -104,7 +113,6 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (LOWORD(wParam)) {
         case BTN_SAVE:
             g_hhookwnd = FindWindow(NULL, TEXT("MultiDIVS"));
-            
             if (MessageBox(hWnd, TEXT("Are you sure want to save current items layout?"),
                 TEXT("Confirmation required"), MB_YESNO) == IDYES)
                     SendMessage(g_hhookwnd, WM_NULL, WM_SAVE_ARRANGEMENT, 0);
@@ -126,6 +134,7 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             return TRUE;
         }
         break;
+    case WM_NULL:
     case WM_CLOSE:
         PostThreadMessage(g_dwhmainappthread, WM_QUIT, 0, 0);
         DestroyWindow(hWnd);
