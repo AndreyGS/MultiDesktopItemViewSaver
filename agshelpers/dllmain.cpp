@@ -28,20 +28,19 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
-int wchardecimaltoint(const WCHAR* const input) {
+int wchardecimaltoint(const WCHAR* input) {
     int i = 0, iprev = 0;
-    const char* p = (const char*)input;
     int neg = 0;
-    if (*p == '-') { neg = 1; p += 2; }
-    while (*p >= '0' && *p <= '9') {
-        i = i * 10 + *p - '0';
+    if (*input == '-') { neg = 1; input += 2; }
+    while (*input >= '0' && *input <= '9') {
+        i = i * 10 + *input - '0';
         if (iprev > i) {
             i = iprev;
             break;
         }
         else
             iprev = i;
-        p += 2;
+        input += 2;
     }
     if (neg) i = -i;
     return i;

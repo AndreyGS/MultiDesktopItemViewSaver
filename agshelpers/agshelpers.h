@@ -6,7 +6,7 @@
 
 #define STATUS_ZERO_MONITORS_COUNT 0xE0000101
 
-AGSHELPERSAPI int wchardecimaltoint(const WCHAR* const input);
+AGSHELPERSAPI int wchardecimaltoint(const WCHAR* input);
 AGSHELPERSAPI inline bool operator==(RECT rt1, RECT rt2);
 
 class DDRegistryExtension;
