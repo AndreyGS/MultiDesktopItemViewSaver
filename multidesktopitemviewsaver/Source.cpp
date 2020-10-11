@@ -21,11 +21,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstExe, _In_opt_ HINSTANCE, _In_ PTSTR pszC
     // Second, we need to wait, while injected function create a server 
     // as modeless dialog which sends us a message that it ready for action.
     MSG msg;
-    int i;
-    for (i = 0;i < 50; ++i) {
-        PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+    for (;;) {
+        GetMessage(&msg, NULL, 0, 0);
         if (msg.message == WM_NULL) break;
-        Sleep(20);
     }
 
     g_hhookwnd = FindWindow(NULL, TEXT("MultiDIVS"));

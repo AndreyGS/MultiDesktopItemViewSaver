@@ -560,7 +560,9 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_DISPLAYCHANGE:
-        PostMessage(hWnd, WM_NULL, WM_POST_DISPLAY_CHANGE_WORKAROUND, 0);
+        // PostMessage to hWnd, lead program to crush under Win10 environment
+        // so I use SendMessage instead
+        SendMessage(hWnd, WM_NULL, WM_POST_DISPLAY_CHANGE_WORKAROUND, 0);
         break;
     case WM_CLOSE:
         DDRegistryExtension::closeDDRegExt();
