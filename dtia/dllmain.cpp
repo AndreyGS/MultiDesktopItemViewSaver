@@ -428,30 +428,6 @@ LRESULT restoreLayoutFromProfile(unsigned char index) {
     return status;
 }
 
-struct CheckSavedProfileResult {
-    LSTATUS status;
-    bool result;
-};
-
-CheckSavedProfileResult isThereAnySavedProfilesInRegistry() {
-    HKEY hkey;
-    TCHAR keypath[_countof(g_mainmonregkey)];
-    StringCchCopyW(keypath, _countof(g_mainmonregkey), g_mainmonregkey);
-
-    DWORD subkeysnum = 0;
-    bool result = false;
-    LSTATUS status = RegOpenKeyEx(HKEY_CURRENT_USER, keypath,
-        0, KEY_QUERY_VALUE, &hkey);
-    
-    if (status == ERROR_SUCCESS) {
-        status = RegQueryInfoKeyW(hkey, nullptr, nullptr, nullptr, &subkeysnum, 
-            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-        RegCloseKey(hkey);
-        if (subkeysnum) result = true;
-    }
-    return { status, result };
-}
-
 LSTATUS deleteSavedProfile(unsigned char index) {
     HKEY hkey;
     TCHAR keypath[_countof(g_mainmonregkey) + 4];
