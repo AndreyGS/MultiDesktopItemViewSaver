@@ -7,7 +7,7 @@ For make this working I impliment two auxillary classes - first for retriving ge
 The usage of program is simple enough.
 ---------------------------------------------------
 
-Almost forgoten to tell what it actually does... This program saves and restores desktop items position. If you save your current layout, you might change somehow display configuration and when you switch back, you'll be able to restore your previous configuration saved with help of this program. As I already mentioned multiple display configurations supported. Configuration distinguishes by resolution, mutual dispostion or taskbar properties (height/weight and position) of every plugged display. If one or more of these settings are different in regard to saved one, items arrangement are saving in separate profile.
+Almost forgoten to tell what it actually does... This program saves and restores desktop items position. If you save your current layout, you might change somehow display configuration and when you switch back, you'll be able to restore your previous configuration saved with help of this program. As I already mentioned multiple display configurations supported. Configuration distinguishes by resolution, mutual dispostion or taskbar properties (height/weight and position) of every plugged display. If one or more of these settings are different in regard to saved one, items arrangement is saved in separate profile.
 
 The program was tested on Windows 7x64 and 10x64
 
