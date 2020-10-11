@@ -266,15 +266,15 @@ struct entry {
     POINT pt;
 };
 
-int sortcompx(const void* p1, const void* p2) {
-    if (((entry*)p1)->pt.x > ((entry*)p2)->pt.x) return 1;
-    else if (((entry*)p1)->pt.x < ((entry*)p2)->pt.x) return -1;
-    else return 0;
-}
-
-int sortcompy(const void* p1, const void* p2) {
-    if (((entry*)p1)->pt.y > ((entry*)p2)->pt.y) return 1;
-    else if (((entry*)p1)->pt.y < ((entry*)p2)->pt.y) return -1;
+int pointcomp(const void* p1, const void* p2) {
+    if ((((entry*)p1)->pt.x > ((entry*)p2)->pt.x)
+        || ((((entry*)p1)->pt.x == ((entry*)p2)->pt.x)
+            && (((entry*)p1)->pt.y > ((entry*)p2)->pt.y)))
+        return 1;
+    else if ((((entry*)p1)->pt.x < ((entry*)p2)->pt.x)
+        || ((((entry*)p1)->pt.x == ((entry*)p2)->pt.x)
+            && (((entry*)p1)->pt.y < ((entry*)p2)->pt.y)))
+        return -1;
     else return 0;
 }
 
@@ -328,16 +328,7 @@ LRESULT restoreLayoutFromProfile(unsigned char index) {
         // next it can shift nearby item that was already aligned.
         // As a result our items may be displaced from their
         // saved positions replaced with chaotic ones.
-        qsort(entries, actualvaluescount, sizeof(entry), sortcompx);
-        for (int i = 0; i < actualvaluescount;) {
-            entry* estart = entries + i;
-            int currenty = entries[i].pt.x;
-            int ynum = 1;
-
-            while (currenty == entries[++i].pt.x)
-                ++ynum;
-            qsort(estart, ynum, sizeof(entry), sortcompy);
-        }
+        qsort(entries, actualvaluescount, sizeof(entry), pointcomp);
 
         DesktopDisplays::MonitorRects mr;
         g_pdesktop->getCornerMonitorRects(DesktopDisplays::Corner::SOUTH_EAST, &mr);
