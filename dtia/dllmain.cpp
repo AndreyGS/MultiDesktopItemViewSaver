@@ -266,14 +266,12 @@ struct entry {
     POINT pt;
 };
 
-int pointcomp(const void* p1, const void* p2) {
-    if ((((entry*)p1)->pt.x > ((entry*)p2)->pt.x)
-        || ((((entry*)p1)->pt.x == ((entry*)p2)->pt.x)
-            && (((entry*)p1)->pt.y > ((entry*)p2)->pt.y)))
+int pointcomp(const entry* p1, const entry* p2) {
+    if (p1->pt.x > p2->pt.x
+        || (p1->pt.x == p2->pt.x && p1->pt.y > p2->pt.y))
         return 1;
-    else if ((((entry*)p1)->pt.x < ((entry*)p2)->pt.x)
-        || ((((entry*)p1)->pt.x == ((entry*)p2)->pt.x)
-            && (((entry*)p1)->pt.y < ((entry*)p2)->pt.y)))
+    else if (p1->pt.x < p2->pt.x
+        || (p1->pt.x == p2->pt.x && p1->pt.y < p2->pt.y))
         return -1;
     else return 0;
 }
@@ -328,7 +326,7 @@ LRESULT restoreLayoutFromProfile(unsigned char index) {
         // next it can shift nearby item that was already aligned.
         // As a result our items may be displaced from their
         // saved positions replaced with chaotic ones.
-        qsort(entries, actualvaluescount, sizeof(entry), pointcomp);
+        qsort(entries, actualvaluescount, sizeof(entry), (int (*)(const void*, const void*))pointcomp);
 
         DesktopDisplays::MonitorRects mr;
         g_pdesktop->getCornerMonitorRects(DesktopDisplays::Corner::SOUTH_EAST, &mr);
@@ -448,7 +446,7 @@ LSTATUS deleteSavedProfile(unsigned char index) {
     return status;
 }
 
-LSTATUS deleteAllSavedPrifilesFromRegistry() {
+LSTATUS deleteAllSavedProfilesFromRegistry() {
     HKEY hkey;
     TCHAR keypath[_countof(g_mainmonregkey) + 4];
     StringCchCopyW(keypath, _countof(g_mainmonregkey), g_mainmonregkey);
@@ -486,7 +484,7 @@ DesktopDisplays* WINAPI setHookToDesktopWindow() {
             return nullptr;
     }
     else {
-        DDRegistryExtension::closeDDRegExt();
+        DesktopDisplays::closeDD();
         UnhookWindowsHookEx(gs_hook);
         return nullptr;
     }
@@ -535,7 +533,7 @@ INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 PostThreadMessage(gs_dwThreadIdMDIVS, WM_NULL, WM_CLEARED, 0);
             break;
         case WM_DELETE_ALL_PROFILES:
-            deleteAllSavedPrifilesFromRegistry();
+            deleteAllSavedProfilesFromRegistry();
             g_pdesktop->retriveCurrentProfileIndexFromRegistry();
             PostThreadMessage(gs_dwThreadIdMDIVS, WM_NULL, WM_CLEARED, 0);
             break;
