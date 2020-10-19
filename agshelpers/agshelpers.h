@@ -67,4 +67,5 @@ private:
     bool valid;
 
     static DesktopDisplays* instance;
+    static int usage;
 };

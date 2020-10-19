@@ -21,7 +21,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_DETACH:
         break;
     case DLL_PROCESS_DETACH:
-        DesktopDisplays::closeDD();
         HeapDestroy(g_threadheap);
         break;
     }
@@ -48,17 +47,20 @@ int wchardecimaltoint(const WCHAR* input) {
 }
 
 DesktopDisplays* DesktopDisplays::instance = nullptr;
+int DesktopDisplays::usage = 0;
 
 DesktopDisplays* DesktopDisplays::getDD() {
     if (instance == nullptr) {
         instance = static_cast<DesktopDisplays*>(HeapAlloc(g_threadheap, 0, sizeof(DesktopDisplays)));
         if (instance) instance = new(instance)DesktopDisplays();
     }
+    if (instance) ++usage;
     return instance;
 }
 
 void DesktopDisplays::closeDD() {
-    if (instance) {
+    if (usage) --usage;
+    if (usage == 0 && instance) {
         instance->~DesktopDisplays();
         HeapFree(g_threadheap, 0, instance);
         instance = nullptr;

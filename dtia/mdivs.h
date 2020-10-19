@@ -43,4 +43,5 @@ private:
     bool keyexist;
 
     static DDRegistryExtension* instance;
+    static int usage;
 };

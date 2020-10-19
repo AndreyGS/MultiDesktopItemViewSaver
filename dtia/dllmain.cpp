@@ -59,17 +59,20 @@ LRESULT WINAPI GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam);
 INT_PTR WINAPI Dlg_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 DDRegistryExtension* DDRegistryExtension::instance = nullptr;
+int DDRegistryExtension::usage = 0;
 
 DDRegistryExtension* DDRegistryExtension::getDDRegExt() {
     if (instance == nullptr) {
         instance = static_cast<DDRegistryExtension*>(HeapAlloc(g_threadheap, 0, sizeof(DDRegistryExtension)));
         if (instance) instance = new(instance)DDRegistryExtension();
     }
+    if (instance) ++usage;
     return instance;
 }
 
 void DDRegistryExtension::closeDDRegExt() {
-    if (instance) {
+    if (usage) --usage;
+    if (usage == 0 && instance) {
         instance->~DDRegistryExtension();
         HeapFree(g_threadheap, 0, instance);
         instance = nullptr;
